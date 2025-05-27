@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Employee List View -->
+    <record id="view_purchase_request_list" model="ir.ui.view">
+        <field name="name">purchase.request.list</field>
+        <field name="model">purchase.request</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="request_owner"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Employee Form View -->
+    <record id="view_purchase_request_form" model="ir.ui.view">
+        <field name="name">purchase.request.form</field>
+        <field name="model">purchase.request</field>
+        <field name="arch" type="xml">
+            <form string="Purchase Request">
+                <header>
+                    <button name="action_submit" type="object" string="Submit" class="btn-primary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="date"/>
+                        <field name="request_owner"/>
+                    </group>
+                    <notebook>
+                        <page string="Request Lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                    <field name="description"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Procurement List View -->
+    <record id="view_procurement_request_list" model="ir.ui.view">
+        <field name="name">purchase.request.procurement.list</field>
+        <field name="model">purchase.request</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+
+            <list string="Procurement Requests">
+                <!-- Display products instead of request reference -->
+                <field name="date"/>
+                <field name="request_owner"/>
+                <field name="vendor_ids"/>
+                <field name="state"/>
+                <!-- Add computed product list -->
+                <field name="product_summary" string="Requested Products" readonly="1"/>
+                <!-- Buttons -->
+            </list>
+        </field>
+    </record>
+
+    <!-- Procurement Form View -->
+    <record id="view_procurement_request_form" model="ir.ui.view">
+        <field name="name">purchase.request.procurement.form</field>
+        <field name="model">purchase.request</field>
+        <field name="arch" type="xml">
+            <form string="Review Purchase Request">
+                <header>
+    <button name="action_approve" type="object" string="Approve" class="btn-success"
+            if="{'invisible': [('state', '!=', 'submitted')]}"/>
+    <button name="action_reject" type="object" string="Reject" class="btn-danger"
+            if="{'invisible': [('state', '!=', 'submitted')]}"/>
+    <button name="action_send_rfq" type="object" string="Create RFQs for Vendors" class="btn-primary"
+            if="{'invisible': [('state', '!=', 'approved')]}"/>
+    <field name="state" widget="statusbar" statusbar_visible="submitted,approved,rejected,rfq_sent"/>
+</header>
+
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="date"/>
+                        <field name="request_owner"/>
+                        <field name="vendor_ids" widget="many2many_tags"/>
+                    </group>
+                    <notebook>
+                    <button name="action_approve" type="object" icon="fa-check" title="Approve"/>
+                <button name="action_reject" type="object" icon="fa-times" title="Reject"/>
+                        <page string="Request Lines">
+                            <field name="line_ids">
+                                <list readonly="1">
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                    <field name="description"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action: My Requests -->
+    <record id="action_purchase_request" model="ir.actions.act_window">
+        <field name="name">My Requests</field>
+        <field name="res_model">purchase.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="views" eval="[(ref('view_purchase_request_list'), 'list'), (ref('view_purchase_request_form'), 'form')]"/>
+        <field name="domain">[('request_owner', '=', uid)]</field>
+    </record>
+
+    <!-- Action: Procurement -->
+    <record id="action_procurement_requests" model="ir.actions.act_window">
+        <field name="name">Procurement Requests</field>
+        <field name="res_model">purchase.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="views" eval="[(ref('view_procurement_request_list'), 'list'), (ref('view_procurement_request_form'), 'form')]"/>
+        <field name="domain">[('state', '=', 'submitted')]</field>
+    </record>
+
+    <!-- Action: Approved Requests -->
+    <record id="action_approved_requests" model="ir.actions.act_window">
+        <field name="name">Approved Requests</field>
+        <field name="res_model">purchase.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'approved')]</field>
+        <field name="views" eval="[(ref('view_procurement_request_list'), 'list'), (ref('view_procurement_request_form'), 'form')]"/>
+    </record>
+
+    <!--./odoo-bin -d mydb -u purchase_enhancements -->
+    <menuitem id="menu_purchase_request_root" name="Purchase Enhancements" parent="purchase.menu_purchase_root"/>
+    <menuitem id="menu_purchase_request" name="My Requests" parent="menu_purchase_request_root" action="action_purchase_request"/>
+    <menuitem id="menu_procurement_requests" name="Procurement Requests" parent="menu_purchase_request_root" action="action_procurement_requests"/>
+    <menuitem id="menu_approved_requests" name="Approved Requests" parent="menu_purchase_request_root" action="action_approved_requests"/>
+
+</odoo>
